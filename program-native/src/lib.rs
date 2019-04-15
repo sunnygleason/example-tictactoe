@@ -61,7 +61,7 @@ fn process_instruction(info: &mut [KeyedAccount], input: &[u8], tick_height: u64
 
     if command == Command::InitDashboard {
         expect_n_accounts(info, 1)?;
-        let mut dashboard_state = State::deserialize(&info[0].account.userdata)?;
+        let mut dashboard_state = State::deserialize(&info[0].account.data)?;
 
         match dashboard_state {
             State::Uninitialized => {
@@ -76,14 +76,14 @@ fn process_instruction(info: &mut [KeyedAccount], input: &[u8], tick_height: u64
                 Err(ProgramError::InvalidInput)
             }
         }?;
-        dashboard_state.serialize(&mut info[0].account.userdata)?;
+        dashboard_state.serialize(&mut info[0].account.data)?;
         return Ok(());
     }
 
     if command == Command::InitPlayer {
         expect_n_accounts(info, 2)?;
         {
-            let dashboard_state = State::deserialize(&info[0].account.userdata)?;
+            let dashboard_state = State::deserialize(&info[0].account.data)?;
             match dashboard_state {
                 State::Dashboard(_) => Ok(()),
                 _ => {
@@ -95,7 +95,7 @@ fn process_instruction(info: &mut [KeyedAccount], input: &[u8], tick_height: u64
                 }
             }?;
 
-            if info[0].account.owner != info[1].account.owner || info[1].account.userdata.len() != 0
+            if info[0].account.owner != info[1].account.owner || info[1].account.data.len() != 0
             {
                 error!(
                     "Invalid player account for InitPlayer: {:?}",
@@ -108,7 +108,7 @@ fn process_instruction(info: &mut [KeyedAccount], input: &[u8], tick_height: u64
     }
 
     expect_n_accounts(info, 3)?;
-    let mut dashboard_state = State::deserialize(&info[1].account.userdata)?;
+    let mut dashboard_state = State::deserialize(&info[1].account.data)?;
     match dashboard_state {
         State::Dashboard(_) => Ok(()),
         _ => {
@@ -118,13 +118,13 @@ fn process_instruction(info: &mut [KeyedAccount], input: &[u8], tick_height: u64
     }?;
 
     if command == Command::InitGame {
-        let mut game_state = State::deserialize(&info[0].account.userdata)?;
+        let mut game_state = State::deserialize(&info[0].account.data)?;
 
         if info[0].account.owner != info[1].account.owner {
             error!("Invalid game account for InitGame: {:?}", dashboard_state);
             Err(ProgramError::InvalidInput)?;
         }
-        if info[0].account.owner != info[2].account.owner || info[2].account.userdata.len() != 0 {
+        if info[0].account.owner != info[2].account.owner || info[2].account.data.len() != 0 {
             error!("Invalid player account for InitGame: {:?}", dashboard_state);
             Err(ProgramError::InvalidInput)?;
         }
@@ -153,14 +153,14 @@ fn process_instruction(info: &mut [KeyedAccount], input: &[u8], tick_height: u64
             }
         }?;
 
-        dashboard_state.serialize(&mut info[1].account.userdata)?;
-        game_state.serialize(&mut info[0].account.userdata)?;
+        dashboard_state.serialize(&mut info[1].account.data)?;
+        game_state.serialize(&mut info[0].account.data)?;
         fund_next_move(info, 1, 0)?;
         return fund_next_move(info, 1, 2);
     }
 
-    let mut game_state = State::deserialize(&info[2].account.userdata)?;
-    if info[0].account.owner != info[1].account.owner || info[0].account.userdata.len() != 0 {
+    let mut game_state = State::deserialize(&info[2].account.data)?;
+    if info[0].account.owner != info[1].account.owner || info[0].account.data.len() != 0 {
         error!("Invalid player account");
         Err(ProgramError::InvalidInput)?;
     }
@@ -199,8 +199,8 @@ fn process_instruction(info: &mut [KeyedAccount], input: &[u8], tick_height: u64
         }
     }?;
 
-    dashboard_state.serialize(&mut info[1].account.userdata)?;
-    game_state.serialize(&mut info[2].account.userdata)?;
+    dashboard_state.serialize(&mut info[1].account.data)?;
+    game_state.serialize(&mut info[2].account.data)?;
     // Distribute funds to the player for their next transaction
     return fund_next_move(info, 1, 0);
 }
